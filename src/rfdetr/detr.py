@@ -534,7 +534,7 @@ class RFDETR:
                     xyxy=boxes.float().cpu().numpy(),
                     confidence=scores.float().cpu().numpy(),
                     class_id=labels.cpu().numpy(),
-                    prob_maps=prob_maps.float().cpu().numpy(),
+                    mask=prob_maps.float().cpu().numpy(),
                 )
 
             detections_list.append(detections)
