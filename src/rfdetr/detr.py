@@ -536,7 +536,7 @@ class RFDETR:
 
             detections_list.append(detections)
 
-        return detections_list if len(detections_list) > 1 else detections_list[0], predictions
+        return detections_list if len(detections_list) > 1 else detections_list[0]
 
     def deploy_to_roboflow(self, workspace: str, project_id: str, version: str, api_key: str = None, size: str = None):
         """

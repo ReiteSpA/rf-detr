@@ -902,7 +902,9 @@ class PostProcess(nn.Module):
                 res_i["masks"] = masks_i > 0.0
                 results.append(res_i)
         else:
-            results = [{"scores": s, "labels": l, "boxes": b} for s, l, b in zip(scores, labels, boxes)]
+            # Gather prob maps for the top-K selected queries [B, K, num_classes]
+            topk_probs = torch.gather(prob, 1, topk_boxes.unsqueeze(-1).repeat(1, 1, prob.shape[2]))
+            results = [{"scores": s, "labels": l, "boxes": b, "prob_maps": p} for s, l, b, p in zip(scores, labels, boxes, topk_probs)]
 
         return results
 
