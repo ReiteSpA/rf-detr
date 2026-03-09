@@ -511,11 +511,13 @@ class RFDETR:
             scores = result["scores"]
             labels = result["labels"]
             boxes = result["boxes"]
+            prob_maps = result.get("prob_maps", None)
 
             keep = scores > threshold
             scores = scores[keep]
             labels = labels[keep]
             boxes = boxes[keep]
+            prob_maps = prob_maps[keep]
 
             if "masks" in result:
                 masks = result["masks"]
@@ -532,6 +534,7 @@ class RFDETR:
                     xyxy=boxes.float().cpu().numpy(),
                     confidence=scores.float().cpu().numpy(),
                     class_id=labels.cpu().numpy(),
+                    prob_maps=prob_maps.float().cpu().numpy(),
                 )
 
             detections_list.append(detections)
