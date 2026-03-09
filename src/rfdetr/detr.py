@@ -511,13 +511,13 @@ class RFDETR:
             scores = result["scores"]
             labels = result["labels"]
             boxes = result["boxes"]
-            prob_maps = result.get("prob_maps", None)
+            topk_logits = result["topk_logits"]
 
             keep = scores > threshold
             scores = scores[keep]
             labels = labels[keep]
             boxes = boxes[keep]
-            prob_maps = prob_maps[keep]
+            topk_logits = topk_logits[keep]
 
             if "masks" in result:
                 masks = result["masks"]
@@ -534,12 +534,11 @@ class RFDETR:
                     xyxy=boxes.float().cpu().numpy(),
                     confidence=scores.float().cpu().numpy(),
                     class_id=labels.cpu().numpy(),
-                    mask=prob_maps.float().cpu().numpy(),
                 )
 
             detections_list.append(detections)
 
-        return detections_list if len(detections_list) > 1 else detections_list[0]
+        return detections_list if len(detections_list) > 1 else detections_list[0], topk_logits.float().cpu().numpy()
 
     def deploy_to_roboflow(self, workspace: str, project_id: str, version: str, api_key: str = None, size: str = None):
         """

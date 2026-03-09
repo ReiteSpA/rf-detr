@@ -855,19 +855,11 @@ class PostProcess(nn.Module):
 
     @torch.no_grad()
     def forward(self, outputs, target_sizes):
-        """Perform the computation
-        Parameters:
-            outputs: raw outputs of the model
-            target_sizes: tensor of dimension [batch_size x 2] containing the size of each images of the batch
-                          For evaluation, this must be the original image size (before any data augmentation)
-                          For visualization, this should be the image size after data augment, but before padding
-        """
         out_logits, out_bbox = outputs["pred_logits"], outputs["pred_boxes"]
         out_masks = outputs.get("pred_masks", None)
-
         assert len(out_logits) == len(target_sizes)
         assert target_sizes.shape[1] == 2
-
+        
         prob = out_logits.sigmoid()
         topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), self.num_select, dim=1)
         scores = topk_values
@@ -875,17 +867,20 @@ class PostProcess(nn.Module):
         labels = topk_indexes % out_logits.shape[2]
         boxes = box_ops.box_cxcywh_to_xyxy(out_bbox)
         boxes = torch.gather(boxes, 1, topk_boxes.unsqueeze(-1).repeat(1, 1, 4))
-
+        
         # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
         boxes = boxes * scale_fct[:, None, :]
 
+        # Gather top-K logits [B, K, num_classes]
+        topk_logits = torch.gather(out_logits, 1, topk_boxes.unsqueeze(-1).repeat(1, 1, out_logits.shape[2]))
+
         # Optionally gather masks corresponding to the same top-K queries and resize to original size
         results = []
         if out_masks is not None:
             for i in range(out_masks.shape[0]):
-                res_i = {"scores": scores[i], "labels": labels[i], "boxes": boxes[i]}
+                res_i = {"scores": scores[i], "labels": labels[i], "boxes": boxes[i], "topk_logits": topk_logits[i]}
                 k_idx = topk_boxes[i]
                 masks_i = torch.gather(
                     out_masks[i],
@@ -902,12 +897,9 @@ class PostProcess(nn.Module):
                 res_i["masks"] = masks_i > 0.0
                 results.append(res_i)
         else:
-            # Gather prob maps for the top-K selected queries [B, K, num_classes]
-            topk_probs = torch.gather(prob, 1, topk_boxes.unsqueeze(-1).repeat(1, 1, prob.shape[2]))
-            results = [{"scores": s, "labels": l, "boxes": b, "prob_maps": p} for s, l, b, p in zip(scores, labels, boxes, topk_probs)]
-
+            results = [{"scores": s, "labels": l, "boxes": b, "topk_logits": lg} for s, l, b, lg in zip(scores, labels, boxes, topk_logits)]
+        
         return results
-
 
 class MLP(nn.Module):
     """Very simple multi-layer perceptron (also called FFN)"""
