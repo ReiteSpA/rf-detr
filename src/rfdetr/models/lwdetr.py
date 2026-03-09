@@ -880,7 +880,7 @@ class PostProcess(nn.Module):
         results = []
         if out_masks is not None:
             for i in range(out_masks.shape[0]):
-                res_i = {"scores": scores[i], "labels": labels[i], "boxes": boxes[i], "topk_logits": topk_logits[i]}
+                res_i = {"scores": scores[i], "labels": labels[i], "boxes": boxes[i], "topk_boxes": topk_boxes[i]}
                 k_idx = topk_boxes[i]
                 masks_i = torch.gather(
                     out_masks[i],
@@ -897,7 +897,7 @@ class PostProcess(nn.Module):
                 res_i["masks"] = masks_i > 0.0
                 results.append(res_i)
         else:
-            results = [{"scores": s, "labels": l, "boxes": b, "topk_logits": lg} for s, l, b, lg in zip(scores, labels, boxes, topk_logits)]
+            results = [{"scores": s, "labels": l, "boxes": b, "topk_boxes": tb} for s, l, b, tb in zip(scores, labels, boxes, topk_boxes)]
         
         return results
 

@@ -16,6 +16,7 @@ import requests
 import supervision as sv
 import torch
 import torchvision.transforms.functional as F
+import torch.nn.functional as TF
 import yaml
 from PIL import Image
 
@@ -493,12 +494,16 @@ class RFDETR:
         
         # Register hook to capture projector feature maps
         feature_maps = {}
-        hook_handle = None
+        hook_handles = []
         if return_activation_maps:
-            def hook_fn(module, input, output):
-                # output shape: [B, C, H, W]
-                feature_maps["proj"] = output.detach()
-            hook_handle = self.model.projector.register_forward_hook(hook_fn)
+            def hook_proj(module, input, output):
+                # MultiScaleProjector returns list of [B, C, H, W]
+                if isinstance(output, (list, tuple)):
+                    feature_maps["proj"] = output[0].detach()  # highest resolution scale
+                else:
+                    feature_maps["proj"] = output.detach()
+
+            hook_handles.append(self.model.model.backbone[0].projector.register_forward_hook(hook_proj))
 
         with torch.no_grad():
             if self._is_optimized_for_inference:
@@ -516,8 +521,8 @@ class RFDETR:
             target_sizes = torch.tensor(orig_sizes, device=self.model.device)
             results = self.model.postprocess(predictions, target_sizes=target_sizes)
         
-        if hook_handle is not None:
-            hook_handle.remove()
+        for handle in hook_handles:
+            handle.remove()
 
         detections_list = []
         activation_maps_list = []
@@ -550,12 +555,14 @@ class RFDETR:
 
             detections_list.append(detections)
 
-            # Build activation map resized to original image size
+            # Build per-detection activation maps using decoder query × projector spatial features
             if return_activation_maps and "proj" in feature_maps:
                 h, w = orig_sizes[i]
-                act = feature_maps["proj"][i]          # [C, Hf, Wf]
+                # Build activation map resized to original image size
+                h, w = orig_sizes[i]
+                act = feature_maps["proj"][i]     # [C, Hf, Wf]
                 act = act.mean(dim=0, keepdim=True)    # [1, Hf, Wf] — avg over channels
-                act = F.interpolate(
+                act = TF.interpolate(
                     act.unsqueeze(0),                  # [1, 1, Hf, Wf]
                     size=(h, w),
                     mode="bilinear",
