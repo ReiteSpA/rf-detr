@@ -23,6 +23,7 @@ from rfdetr.datasets.coco import is_valid_coco_dataset
 from rfdetr.datasets.yolo import is_valid_yolo_dataset
 from rfdetr.util.logger import get_logger
 
+from typing import Dict, Any, Tuple
 try:
     torch.set_float32_matmul_precision("high")
 except:
@@ -403,7 +404,7 @@ class RFDETR:
         ],
         threshold: float = 0.5,
         **kwargs,
-    ) -> Union[sv.Detections, List[sv.Detections]]:
+    ) -> Union[sv.Detections, List[sv.Detections], Tuple[sv.Detections, Dict[str, Any]]]:
         """Performs object detection on the input images and returns bounding box
         predictions.
 
@@ -535,7 +536,7 @@ class RFDETR:
 
             detections_list.append(detections)
 
-        return detections_list if len(detections_list) > 1 else detections_list[0]
+        return detections_list if len(detections_list) > 1 else detections_list[0], predictions
 
     def deploy_to_roboflow(self, workspace: str, project_id: str, version: str, api_key: str = None, size: str = None):
         """
