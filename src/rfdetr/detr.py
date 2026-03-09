@@ -403,6 +403,7 @@ class RFDETR:
             str, Image.Image, np.ndarray, torch.Tensor, List[Union[str, np.ndarray, Image.Image, torch.Tensor]]
         ],
         threshold: float = 0.5,
+        return_activation_maps: bool = False,
         **kwargs,
     ) -> Union[sv.Detections, List[sv.Detections], Tuple[sv.Detections, Dict[str, Any]]]:
         """Performs object detection on the input images and returns bounding box
@@ -489,6 +490,15 @@ class RFDETR:
                         "Alternatively, you can recompile the optimized model for a different batch size "
                         "by calling model.optimize_for_inference(batch_size=<new_batch_size>)."
                     )
+        
+        # Register hook to capture projector feature maps
+        feature_maps = {}
+        hook_handle = None
+        if return_activation_maps:
+            def hook_fn(module, input, output):
+                # output shape: [B, C, H, W]
+                feature_maps["proj"] = output.detach()
+            hook_handle = self.model.projector.register_forward_hook(hook_fn)
 
         with torch.no_grad():
             if self._is_optimized_for_inference:
@@ -505,19 +515,21 @@ class RFDETR:
                 predictions = return_predictions
             target_sizes = torch.tensor(orig_sizes, device=self.model.device)
             results = self.model.postprocess(predictions, target_sizes=target_sizes)
+        
+        if hook_handle is not None:
+            hook_handle.remove()
 
         detections_list = []
-        for result in results:
+        activation_maps_list = []
+        for i, result in enumerate(results):
             scores = result["scores"]
             labels = result["labels"]
             boxes = result["boxes"]
-            topk_logits = result["topk_logits"]
 
             keep = scores > threshold
             scores = scores[keep]
             labels = labels[keep]
             boxes = boxes[keep]
-            topk_logits = topk_logits[keep]
 
             if "masks" in result:
                 masks = result["masks"]
@@ -538,7 +550,22 @@ class RFDETR:
 
             detections_list.append(detections)
 
-        return detections_list if len(detections_list) > 1 else detections_list[0], topk_logits.float().cpu().numpy()
+            # Build activation map resized to original image size
+            if return_activation_maps and "proj" in feature_maps:
+                h, w = orig_sizes[i]
+                act = feature_maps["proj"][i]          # [C, Hf, Wf]
+                act = act.mean(dim=0, keepdim=True)    # [1, Hf, Wf] — avg over channels
+                act = F.interpolate(
+                    act.unsqueeze(0),                  # [1, 1, Hf, Wf]
+                    size=(h, w),
+                    mode="bilinear",
+                    align_corners=False,
+                ).squeeze().cpu().numpy()              # [H, W]
+                # Normalize to [0, 1]
+                act = (act - act.min()) / (act.max() - act.min() + 1e-8)
+                activation_maps_list.append(act)
+
+        return detections_list if len(detections_list) > 1 else detections_list[0], activation_maps_list
 
     def deploy_to_roboflow(self, workspace: str, project_id: str, version: str, api_key: str = None, size: str = None):
         """
