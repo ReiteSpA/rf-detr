@@ -27,10 +27,12 @@ try:
 except ModuleNotFoundError:
     mlflow = None
 
-try:
-    from clearml import Task
-except ModuleNotFoundError:
-    Task = None
+# try:
+#     from clearml import Task
+# except ModuleNotFoundError:
+#     Task = None
+
+Task = None
 
 
 logger = get_logger()
