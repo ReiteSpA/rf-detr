@@ -52,11 +52,11 @@ from rfdetr.config import (
 from rfdetr.main import Model
 from rfdetr.util.coco_classes import COCO_CLASSES
 from rfdetr.util.metrics import (
-    MetricsClearMLSink,
-    MetricsMLFlowSink,
+    #MetricsClearMLSink,
+    #MetricsMLFlowSink,
     MetricsPlotSink,
-    MetricsTensorBoardSink,
-    MetricsWandBSink,
+    #MetricsTensorBoardSink,
+    #MetricsWandBSink,
 )
 
 logger = get_logger()
@@ -326,34 +326,34 @@ class RFDETR:
         self.callbacks["on_fit_epoch_end"].append(metrics_plot_sink.update)
         self.callbacks["on_train_end"].append(metrics_plot_sink.save)
 
-        if config.tensorboard:
-            metrics_tensor_board_sink = MetricsTensorBoardSink(output_dir=config.output_dir)
-            self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
-            self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
+        # if config.tensorboard:
+        #     metrics_tensor_board_sink = MetricsTensorBoardSink(output_dir=config.output_dir)
+        #     self.callbacks["on_fit_epoch_end"].append(metrics_tensor_board_sink.update)
+        #     self.callbacks["on_train_end"].append(metrics_tensor_board_sink.close)
 
-        if config.wandb:
-            metrics_wandb_sink = MetricsWandBSink(
-                output_dir=config.output_dir, project=config.project, run=config.run, config=config.model_dump()
-            )
-            self.callbacks["on_fit_epoch_end"].append(metrics_wandb_sink.update)
-            self.callbacks["on_train_end"].append(metrics_wandb_sink.close)
+        # if config.wandb:
+        #     metrics_wandb_sink = MetricsWandBSink(
+        #         output_dir=config.output_dir, project=config.project, run=config.run, config=config.model_dump()
+        #     )
+        #     self.callbacks["on_fit_epoch_end"].append(metrics_wandb_sink.update)
+        #     self.callbacks["on_train_end"].append(metrics_wandb_sink.close)
 
-        if config.mlflow:
-            metrics_mlflow_sink = MetricsMLFlowSink(
-                output_dir=config.output_dir,
-                experiment_name=config.project,
-                run_name=config.run,
-                config=config.model_dump(),
-            )
-            self.callbacks["on_fit_epoch_end"].append(metrics_mlflow_sink.update)
-            self.callbacks["on_train_end"].append(metrics_mlflow_sink.close)
+        # if config.mlflow:
+        #     metrics_mlflow_sink = MetricsMLFlowSink(
+        #         output_dir=config.output_dir,
+        #         experiment_name=config.project,
+        #         run_name=config.run,
+        #         config=config.model_dump(),
+        #     )
+        #     self.callbacks["on_fit_epoch_end"].append(metrics_mlflow_sink.update)
+        #     self.callbacks["on_train_end"].append(metrics_mlflow_sink.close)
 
-        if config.clearml:
-            metrics_clearml_sink = MetricsClearMLSink(
-                output_dir=config.output_dir, project=config.project, run=config.run, config=config.model_dump()
-            )
-            self.callbacks["on_fit_epoch_end"].append(metrics_clearml_sink.update)
-            self.callbacks["on_train_end"].append(metrics_clearml_sink.close)
+        # if config.clearml:
+        #     metrics_clearml_sink = MetricsClearMLSink(
+        #         output_dir=config.output_dir, project=config.project, run=config.run, config=config.model_dump()
+        #     )
+        #     self.callbacks["on_fit_epoch_end"].append(metrics_clearml_sink.update)
+        #     self.callbacks["on_train_end"].append(metrics_clearml_sink.close)
 
         if config.early_stopping:
             from rfdetr.util.early_stopping import EarlyStoppingCallback
