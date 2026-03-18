@@ -12,20 +12,20 @@ import numpy as np
 
 from rfdetr.util.logger import get_logger
 
-try:
-    from torch.utils.tensorboard import SummaryWriter
-except ModuleNotFoundError:
-    SummaryWriter = None
+# try:
+#     from torch.utils.tensorboard import SummaryWriter
+# except ModuleNotFoundError:
+#     SummaryWriter = None
 
-try:
-    import wandb
-except ModuleNotFoundError:
-    wandb = None
+# try:
+#     import wandb
+# except ModuleNotFoundError:
+#     wandb = None
 
-try:
-    import mlflow
-except ModuleNotFoundError:
-    mlflow = None
+# try:
+#     import mlflow
+# except ModuleNotFoundError:
+#     mlflow = None
 
 # try:
 #     from clearml import Task
@@ -144,335 +144,335 @@ class MetricsPlotSink:
         logger.info(f"Results saved to {self.output_dir}/{PLOT_FILE_NAME}")
 
 
-class MetricsTensorBoardSink:
-    """
-    Training metrics via TensorBoard.
+# class MetricsTensorBoardSink:
+#     """
+#     Training metrics via TensorBoard.
 
-    Args:
-        output_dir (str): Directory where TensorBoard logs will be written.
-    """
+#     Args:
+#         output_dir (str): Directory where TensorBoard logs will be written.
+#     """
 
-    def __init__(self, output_dir: str) -> None:
-        if SummaryWriter:
-            self.writer = SummaryWriter(log_dir=output_dir)
-            logger.info(
-                f"TensorBoard logging initialized. To monitor logs, use 'tensorboard --logdir {output_dir}' and open http://localhost:6006/ in browser."
-            )
-        else:
-            self.writer = None
-            logger.warning(
-                "Unable to initialize TensorBoard. Logging is turned off for this session. Run 'pip install tensorboard' to enable logging."
-            )
+#     def __init__(self, output_dir: str) -> None:
+#         if SummaryWriter:
+#             self.writer = SummaryWriter(log_dir=output_dir)
+#             logger.info(
+#                 f"TensorBoard logging initialized. To monitor logs, use 'tensorboard --logdir {output_dir}' and open http://localhost:6006/ in browser."
+#             )
+#         else:
+#             self.writer = None
+#             logger.warning(
+#                 "Unable to initialize TensorBoard. Logging is turned off for this session. Run 'pip install tensorboard' to enable logging."
+#             )
 
-    def update(self, values: Dict[str, Any]) -> None:
-        if not self.writer:
-            return
+#     def update(self, values: Dict[str, Any]) -> None:
+#         if not self.writer:
+#             return
 
-        epoch = values["epoch"]
+#         epoch = values["epoch"]
 
-        if "train_loss" in values:
-            self.writer.add_scalar("Loss/Train", values["train_loss"], epoch)
-        if "test_loss" in values:
-            self.writer.add_scalar("Loss/Test", values["test_loss"], epoch)
+#         if "train_loss" in values:
+#             self.writer.add_scalar("Loss/Train", values["train_loss"], epoch)
+#         if "test_loss" in values:
+#             self.writer.add_scalar("Loss/Test", values["test_loss"], epoch)
 
-        if "test_coco_eval_bbox" in values:
-            coco_eval = values["test_coco_eval_bbox"]
-            ap50_90 = safe_index(coco_eval, 0)
-            ap50 = safe_index(coco_eval, 1)
-            ar50_90 = safe_index(coco_eval, 8)
-            if ap50_90 is not None:
-                self.writer.add_scalar("Metrics/Base/AP50_90", ap50_90, epoch)
-            if ap50 is not None:
-                self.writer.add_scalar("Metrics/Base/AP50", ap50, epoch)
-            if ar50_90 is not None:
-                self.writer.add_scalar("Metrics/Base/AR50_90", ar50_90, epoch)
+#         if "test_coco_eval_bbox" in values:
+#             coco_eval = values["test_coco_eval_bbox"]
+#             ap50_90 = safe_index(coco_eval, 0)
+#             ap50 = safe_index(coco_eval, 1)
+#             ar50_90 = safe_index(coco_eval, 8)
+#             if ap50_90 is not None:
+#                 self.writer.add_scalar("Metrics/Base/AP50_90", ap50_90, epoch)
+#             if ap50 is not None:
+#                 self.writer.add_scalar("Metrics/Base/AP50", ap50, epoch)
+#             if ar50_90 is not None:
+#                 self.writer.add_scalar("Metrics/Base/AR50_90", ar50_90, epoch)
 
-        if "ema_test_coco_eval_bbox" in values:
-            ema_coco_eval = values["ema_test_coco_eval_bbox"]
-            ema_ap50_90 = safe_index(ema_coco_eval, 0)
-            ema_ap50 = safe_index(ema_coco_eval, 1)
-            ema_ar50_90 = safe_index(ema_coco_eval, 8)
-            if ema_ap50_90 is not None:
-                self.writer.add_scalar("Metrics/EMA/AP50_90", ema_ap50_90, epoch)
-            if ema_ap50 is not None:
-                self.writer.add_scalar("Metrics/EMA/AP50", ema_ap50, epoch)
-            if ema_ar50_90 is not None:
-                self.writer.add_scalar("Metrics/EMA/AR50_90", ema_ar50_90, epoch)
+#         if "ema_test_coco_eval_bbox" in values:
+#             ema_coco_eval = values["ema_test_coco_eval_bbox"]
+#             ema_ap50_90 = safe_index(ema_coco_eval, 0)
+#             ema_ap50 = safe_index(ema_coco_eval, 1)
+#             ema_ar50_90 = safe_index(ema_coco_eval, 8)
+#             if ema_ap50_90 is not None:
+#                 self.writer.add_scalar("Metrics/EMA/AP50_90", ema_ap50_90, epoch)
+#             if ema_ap50 is not None:
+#                 self.writer.add_scalar("Metrics/EMA/AP50", ema_ap50, epoch)
+#             if ema_ar50_90 is not None:
+#                 self.writer.add_scalar("Metrics/EMA/AR50_90", ema_ar50_90, epoch)
 
-        self.writer.flush()
+#         self.writer.flush()
 
-    def close(self):
-        if not self.writer:
-            return
+#     def close(self):
+#         if not self.writer:
+#             return
 
-        self.writer.close()
-
-
-class MetricsWandBSink:
-    """
-    Training metrics via W&B.
-
-    Args:
-        output_dir (str): Directory where W&B logs will be written locally.
-        project (str, optional): Associate this training run with a W&B project. If None, W&B will generate a name based on the git repo name.
-        run (str, optional): W&B run name. If None, W&B will generate a random name.
-        config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings for the run for later comparison.
-    """
-
-    def __init__(
-        self, output_dir: str, project: Optional[str] = None, run: Optional[str] = None, config: Optional[dict] = None
-    ):
-        self.output_dir = output_dir
-        if wandb:
-            self.run = wandb.init(project=project, name=run, config=config, dir=output_dir)
-            logger.info(f"W&B logging initialized. To monitor logs, open {wandb.run.url}.")
-        else:
-            self.run = None
-            logger.warning(
-                "Unable to initialize W&B. Logging is turned off for this session. Run 'pip install wandb' to enable logging."
-            )
-
-    def update(self, values: dict):
-        if not wandb or not self.run:
-            return
-
-        epoch = values["epoch"]
-        log_dict = {"epoch": epoch}
-
-        if "train_loss" in values:
-            log_dict["Loss/Train"] = values["train_loss"]
-        if "test_loss" in values:
-            log_dict["Loss/Test"] = values["test_loss"]
-
-        if "test_coco_eval_bbox" in values:
-            coco_eval = values["test_coco_eval_bbox"]
-            ap50_90 = safe_index(coco_eval, 0)
-            ap50 = safe_index(coco_eval, 1)
-            ar50_90 = safe_index(coco_eval, 8)
-            if ap50_90 is not None:
-                log_dict["Metrics/Base/AP50_90"] = ap50_90
-            if ap50 is not None:
-                log_dict["Metrics/Base/AP50"] = ap50
-            if ar50_90 is not None:
-                log_dict["Metrics/Base/AR50_90"] = ar50_90
-
-        if "ema_test_coco_eval_bbox" in values:
-            ema_coco_eval = values["ema_test_coco_eval_bbox"]
-            ema_ap50_90 = safe_index(ema_coco_eval, 0)
-            ema_ap50 = safe_index(ema_coco_eval, 1)
-            ema_ar50_90 = safe_index(ema_coco_eval, 8)
-            if ema_ap50_90 is not None:
-                log_dict["Metrics/EMA/AP50_90"] = ema_ap50_90
-            if ema_ap50 is not None:
-                log_dict["Metrics/EMA/AP50"] = ema_ap50
-            if ema_ar50_90 is not None:
-                log_dict["Metrics/EMA/AR50_90"] = ema_ar50_90
-
-        wandb.log(log_dict)
-
-    def close(self):
-        if not wandb or not self.run:
-            return
-        self.run.finish()
+#         self.writer.close()
 
 
-class MetricsMLFlowSink:
-    """
-    Training metrics via MLFlow.
+# class MetricsWandBSink:
+#     """
+#     Training metrics via W&B.
 
-    Args:
-        output_dir (str): Directory where MLFlow logs will be written locally.
-        experiment_name (str, optional): Associate this training run with an MLFlow experiment.
-                                        If None, MLFlow will use the default experiment.
-        run_name (str, optional): MLFlow run name. If None, MLFlow will generate a random name.
-        config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings
-                                for the run for later comparison.
-        track_system_metrics (bool, optional): Whether to track system metrics like CPU, memory, GPU usage.
-                                              Default is True.
+#     Args:
+#         output_dir (str): Directory where W&B logs will be written locally.
+#         project (str, optional): Associate this training run with a W&B project. If None, W&B will generate a name based on the git repo name.
+#         run (str, optional): W&B run name. If None, W&B will generate a random name.
+#         config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings for the run for later comparison.
+#     """
 
-    """
+#     def __init__(
+#         self, output_dir: str, project: Optional[str] = None, run: Optional[str] = None, config: Optional[dict] = None
+#     ):
+#         self.output_dir = output_dir
+#         if wandb:
+#             self.run = wandb.init(project=project, name=run, config=config, dir=output_dir)
+#             logger.info(f"W&B logging initialized. To monitor logs, open {wandb.run.url}.")
+#         else:
+#             self.run = None
+#             logger.warning(
+#                 "Unable to initialize W&B. Logging is turned off for this session. Run 'pip install wandb' to enable logging."
+#             )
 
-    def __init__(
-        self,
-        output_dir: str,
-        experiment_name: Optional[str] = None,
-        run_name: Optional[str] = None,
-        config: Optional[dict] = None,
-        track_system_metrics: bool = True,
-    ):
-        if not mlflow:
-            self.run = None
-            logger.warning(
-                "Unable to initialize MLFlow. Logging is turned off for this session. Run 'pip install mlflow' to enable logging."
-                "\nAfter installing, you can start the MLflow UI with: 'mlflow ui'"
-                "\nThen access the MLflow dashboard at http://localhost:5000"
-            )
-            return
+#     def update(self, values: dict):
+#         if not wandb or not self.run:
+#             return
 
-        if not mlflow.is_tracking_uri_set():
-            tracking_uri = os.getenv("MLFLOW_URL") or os.getenv("MLFLOW_TRACKING_URI")
-            if tracking_uri:
-                mlflow.set_tracking_uri(tracking_uri)
-            else:
-                output_dir = Path(output_dir).absolute().as_uri()
-                mlflow.set_tracking_uri(output_dir)
+#         epoch = values["epoch"]
+#         log_dict = {"epoch": epoch}
 
-        tracking_uri = mlflow.get_tracking_uri()
+#         if "train_loss" in values:
+#             log_dict["Loss/Train"] = values["train_loss"]
+#         if "test_loss" in values:
+#             log_dict["Loss/Test"] = values["test_loss"]
 
-        logger.info(
-            "To start the MLflow UI, run: 'mlflow ui --backend-store-uri %s'"
-            "\nThen access the MLflow dashboard at http://localhost:5000",
-            tracking_uri,
-        )
+#         if "test_coco_eval_bbox" in values:
+#             coco_eval = values["test_coco_eval_bbox"]
+#             ap50_90 = safe_index(coco_eval, 0)
+#             ap50 = safe_index(coco_eval, 1)
+#             ar50_90 = safe_index(coco_eval, 8)
+#             if ap50_90 is not None:
+#                 log_dict["Metrics/Base/AP50_90"] = ap50_90
+#             if ap50 is not None:
+#                 log_dict["Metrics/Base/AP50"] = ap50
+#             if ar50_90 is not None:
+#                 log_dict["Metrics/Base/AR50_90"] = ar50_90
 
-        experiment_id = None
+#         if "ema_test_coco_eval_bbox" in values:
+#             ema_coco_eval = values["ema_test_coco_eval_bbox"]
+#             ema_ap50_90 = safe_index(ema_coco_eval, 0)
+#             ema_ap50 = safe_index(ema_coco_eval, 1)
+#             ema_ar50_90 = safe_index(ema_coco_eval, 8)
+#             if ema_ap50_90 is not None:
+#                 log_dict["Metrics/EMA/AP50_90"] = ema_ap50_90
+#             if ema_ap50 is not None:
+#                 log_dict["Metrics/EMA/AP50"] = ema_ap50
+#             if ema_ar50_90 is not None:
+#                 log_dict["Metrics/EMA/AR50_90"] = ema_ar50_90
 
-        if experiment_name:
-            try:
-                experiment = mlflow.get_experiment_by_name(experiment_name)
-                if experiment:
-                    experiment_id = experiment.experiment_id
-                else:
-                    experiment_id = mlflow.create_experiment(experiment_name)
-            except Exception as e:
-                logger.warning("Error setting up MLFlow experiment: %s", e)
+#         wandb.log(log_dict)
 
-        try:
-            self.run = mlflow.start_run(experiment_id=experiment_id, run_name=run_name)
-            if track_system_metrics:
-                if hasattr(mlflow, "enable_system_metrics_logging"):
-                    mlflow.enable_system_metrics_logging()
-                else:
-                    logger.warning(
-                        "MLflow system metrics logging is not available in this version. Upgrade mlflow to enable it."
-                    )
-
-            logger.info(
-                "MLFlow logging initialized. Run ID: %s",
-                mlflow.active_run().info.run_id,
-            )
-
-            if config:
-                for key, value in config.items():
-                    try:
-                        mlflow.log_param(key, value)
-                    except Exception as e:
-                        logger.warning("Error logging MLFlow parameter %s: %s", key, e)
-
-        except Exception as e:
-            logger.warning("Error starting MLFlow run: %s", e)
-            self.run = None
-
-    def update(self, values: dict):
-        if not mlflow or not self.run:
-            return
-
-        epoch = values["epoch"]
-        metrics_dict = {}
-
-        if "train_loss" in values:
-            metrics_dict["Loss/Train"] = values["train_loss"]
-        if "test_loss" in values:
-            metrics_dict["Loss/Test"] = values["test_loss"]
-
-        if "test_coco_eval_bbox" in values:
-            coco_eval = values["test_coco_eval_bbox"]
-            ap50_90 = safe_index(coco_eval, 0)
-            ap50 = safe_index(coco_eval, 1)
-            ar50_90 = safe_index(coco_eval, 8)
-            if ap50_90 is not None:
-                metrics_dict["Metrics/Base/AP50_90"] = ap50_90
-            if ap50 is not None:
-                metrics_dict["Metrics/Base/AP50"] = ap50
-            if ar50_90 is not None:
-                metrics_dict["Metrics/Base/AR50_90"] = ar50_90
-
-        if "ema_test_coco_eval_bbox" in values:
-            ema_coco_eval = values["ema_test_coco_eval_bbox"]
-            ema_ap50_90 = safe_index(ema_coco_eval, 0)
-            ema_ap50 = safe_index(ema_coco_eval, 1)
-            ema_ar50_90 = safe_index(ema_coco_eval, 8)
-            if ema_ap50_90 is not None:
-                metrics_dict["Metrics/EMA/AP50_90"] = ema_ap50_90
-            if ema_ap50 is not None:
-                metrics_dict["Metrics/EMA/AP50"] = ema_ap50
-            if ema_ar50_90 is not None:
-                metrics_dict["Metrics/EMA/AR50_90"] = ema_ar50_90
-
-        mlflow.log_metrics(metrics_dict, step=epoch)
-
-    def close(self):
-        if not mlflow or not self.run:
-            return
-
-        mlflow.end_run()
+#     def close(self):
+#         if not wandb or not self.run:
+#             return
+#         self.run.finish()
 
 
-class MetricsClearMLSink:
-    """
-    Training metrics via ClearML.
+# class MetricsMLFlowSink:
+#     """
+#     Training metrics via MLFlow.
 
-    Args:
-        output_dir (str): Directory where ClearML logs will be written locally.
-        project (str, optional): Associate this training run with a ClearML project.
-        run (str, optional): ClearML task name.
-        config (dict, optional): Input parameters.
-    """
+#     Args:
+#         output_dir (str): Directory where MLFlow logs will be written locally.
+#         experiment_name (str, optional): Associate this training run with an MLFlow experiment.
+#                                         If None, MLFlow will use the default experiment.
+#         run_name (str, optional): MLFlow run name. If None, MLFlow will generate a random name.
+#         config (dict, optional): Input parameters, like hyperparameters or data preprocessing settings
+#                                 for the run for later comparison.
+#         track_system_metrics (bool, optional): Whether to track system metrics like CPU, memory, GPU usage.
+#                                               Default is True.
 
-    def __init__(
-        self, output_dir: str, project: Optional[str] = None, run: Optional[str] = None, config: Optional[dict] = None
-    ):
-        self.output_dir = output_dir
-        if Task:
-            self.task = Task.init(project_name=project, task_name=run, output_uri=output_dir)
-            if config:
-                self.task.connect(config)
-            self.logger = self.task.get_logger()
-            logger.info("ClearML logging initialized. To monitor logs, open the ClearML Web UI.")
-        else:
-            self.task = None
-            self.logger = None
-            logger.warning(
-                "Unable to initialize ClearML. Logging is turned off for this session. "
-                "Run 'pip install clearml' to enable logging."
-            )
+#     """
 
-    def update(self, values: dict):
-        if not self.task or not self.logger:
-            return
+#     def __init__(
+#         self,
+#         output_dir: str,
+#         experiment_name: Optional[str] = None,
+#         run_name: Optional[str] = None,
+#         config: Optional[dict] = None,
+#         track_system_metrics: bool = True,
+#     ):
+#         if not mlflow:
+#             self.run = None
+#             logger.warning(
+#                 "Unable to initialize MLFlow. Logging is turned off for this session. Run 'pip install mlflow' to enable logging."
+#                 "\nAfter installing, you can start the MLflow UI with: 'mlflow ui'"
+#                 "\nThen access the MLflow dashboard at http://localhost:5000"
+#             )
+#             return
 
-        epoch = values["epoch"]
+#         if not mlflow.is_tracking_uri_set():
+#             tracking_uri = os.getenv("MLFLOW_URL") or os.getenv("MLFLOW_TRACKING_URI")
+#             if tracking_uri:
+#                 mlflow.set_tracking_uri(tracking_uri)
+#             else:
+#                 output_dir = Path(output_dir).absolute().as_uri()
+#                 mlflow.set_tracking_uri(output_dir)
 
-        if "train_loss" in values:
-            self.logger.report_scalar("Loss", "Train", values["train_loss"], epoch)
-        if "test_loss" in values:
-            self.logger.report_scalar("Loss", "Test", values["test_loss"], epoch)
+#         tracking_uri = mlflow.get_tracking_uri()
 
-        if "test_coco_eval_bbox" in values:
-            coco_eval = values["test_coco_eval_bbox"]
-            ap50_90 = safe_index(coco_eval, 0)
-            ap50 = safe_index(coco_eval, 1)
-            ar50_90 = safe_index(coco_eval, 8)
-            if ap50_90 is not None:
-                self.logger.report_scalar("Metrics/Base", "AP50_90", ap50_90, epoch)
-            if ap50 is not None:
-                self.logger.report_scalar("Metrics/Base", "AP50", ap50, epoch)
-            if ar50_90 is not None:
-                self.logger.report_scalar("Metrics/Base", "AR50_90", ar50_90, epoch)
+#         logger.info(
+#             "To start the MLflow UI, run: 'mlflow ui --backend-store-uri %s'"
+#             "\nThen access the MLflow dashboard at http://localhost:5000",
+#             tracking_uri,
+#         )
 
-        if "ema_test_coco_eval_bbox" in values:
-            ema_coco_eval = values["ema_test_coco_eval_bbox"]
-            ema_ap50_90 = safe_index(ema_coco_eval, 0)
-            ema_ap50 = safe_index(ema_coco_eval, 1)
-            ema_ar50_90 = safe_index(ema_coco_eval, 8)
-            if ema_ap50_90 is not None:
-                self.logger.report_scalar("Metrics/EMA", "AP50_90", ema_ap50_90, epoch)
-            if ema_ap50 is not None:
-                self.logger.report_scalar("Metrics/EMA", "AP50", ema_ap50, epoch)
-            if ema_ar50_90 is not None:
-                self.logger.report_scalar("Metrics/EMA", "AR50_90", ema_ar50_90, epoch)
+#         experiment_id = None
 
-    def close(self):
-        if not self.task:
-            return
-        self.task.close()
+#         if experiment_name:
+#             try:
+#                 experiment = mlflow.get_experiment_by_name(experiment_name)
+#                 if experiment:
+#                     experiment_id = experiment.experiment_id
+#                 else:
+#                     experiment_id = mlflow.create_experiment(experiment_name)
+#             except Exception as e:
+#                 logger.warning("Error setting up MLFlow experiment: %s", e)
+
+#         try:
+#             self.run = mlflow.start_run(experiment_id=experiment_id, run_name=run_name)
+#             if track_system_metrics:
+#                 if hasattr(mlflow, "enable_system_metrics_logging"):
+#                     mlflow.enable_system_metrics_logging()
+#                 else:
+#                     logger.warning(
+#                         "MLflow system metrics logging is not available in this version. Upgrade mlflow to enable it."
+#                     )
+
+#             logger.info(
+#                 "MLFlow logging initialized. Run ID: %s",
+#                 mlflow.active_run().info.run_id,
+#             )
+
+#             if config:
+#                 for key, value in config.items():
+#                     try:
+#                         mlflow.log_param(key, value)
+#                     except Exception as e:
+#                         logger.warning("Error logging MLFlow parameter %s: %s", key, e)
+
+#         except Exception as e:
+#             logger.warning("Error starting MLFlow run: %s", e)
+#             self.run = None
+
+#     def update(self, values: dict):
+#         if not mlflow or not self.run:
+#             return
+
+#         epoch = values["epoch"]
+#         metrics_dict = {}
+
+#         if "train_loss" in values:
+#             metrics_dict["Loss/Train"] = values["train_loss"]
+#         if "test_loss" in values:
+#             metrics_dict["Loss/Test"] = values["test_loss"]
+
+#         if "test_coco_eval_bbox" in values:
+#             coco_eval = values["test_coco_eval_bbox"]
+#             ap50_90 = safe_index(coco_eval, 0)
+#             ap50 = safe_index(coco_eval, 1)
+#             ar50_90 = safe_index(coco_eval, 8)
+#             if ap50_90 is not None:
+#                 metrics_dict["Metrics/Base/AP50_90"] = ap50_90
+#             if ap50 is not None:
+#                 metrics_dict["Metrics/Base/AP50"] = ap50
+#             if ar50_90 is not None:
+#                 metrics_dict["Metrics/Base/AR50_90"] = ar50_90
+
+#         if "ema_test_coco_eval_bbox" in values:
+#             ema_coco_eval = values["ema_test_coco_eval_bbox"]
+#             ema_ap50_90 = safe_index(ema_coco_eval, 0)
+#             ema_ap50 = safe_index(ema_coco_eval, 1)
+#             ema_ar50_90 = safe_index(ema_coco_eval, 8)
+#             if ema_ap50_90 is not None:
+#                 metrics_dict["Metrics/EMA/AP50_90"] = ema_ap50_90
+#             if ema_ap50 is not None:
+#                 metrics_dict["Metrics/EMA/AP50"] = ema_ap50
+#             if ema_ar50_90 is not None:
+#                 metrics_dict["Metrics/EMA/AR50_90"] = ema_ar50_90
+
+#         mlflow.log_metrics(metrics_dict, step=epoch)
+
+#     def close(self):
+#         if not mlflow or not self.run:
+#             return
+
+#         mlflow.end_run()
+
+
+# class MetricsClearMLSink:
+#     """
+#     Training metrics via ClearML.
+
+#     Args:
+#         output_dir (str): Directory where ClearML logs will be written locally.
+#         project (str, optional): Associate this training run with a ClearML project.
+#         run (str, optional): ClearML task name.
+#         config (dict, optional): Input parameters.
+#     """
+
+#     def __init__(
+#         self, output_dir: str, project: Optional[str] = None, run: Optional[str] = None, config: Optional[dict] = None
+#     ):
+#         self.output_dir = output_dir
+#         if Task:
+#             self.task = Task.init(project_name=project, task_name=run, output_uri=output_dir)
+#             if config:
+#                 self.task.connect(config)
+#             self.logger = self.task.get_logger()
+#             logger.info("ClearML logging initialized. To monitor logs, open the ClearML Web UI.")
+#         else:
+#             self.task = None
+#             self.logger = None
+#             logger.warning(
+#                 "Unable to initialize ClearML. Logging is turned off for this session. "
+#                 "Run 'pip install clearml' to enable logging."
+#             )
+
+#     def update(self, values: dict):
+#         if not self.task or not self.logger:
+#             return
+
+#         epoch = values["epoch"]
+
+#         if "train_loss" in values:
+#             self.logger.report_scalar("Loss", "Train", values["train_loss"], epoch)
+#         if "test_loss" in values:
+#             self.logger.report_scalar("Loss", "Test", values["test_loss"], epoch)
+
+#         if "test_coco_eval_bbox" in values:
+#             coco_eval = values["test_coco_eval_bbox"]
+#             ap50_90 = safe_index(coco_eval, 0)
+#             ap50 = safe_index(coco_eval, 1)
+#             ar50_90 = safe_index(coco_eval, 8)
+#             if ap50_90 is not None:
+#                 self.logger.report_scalar("Metrics/Base", "AP50_90", ap50_90, epoch)
+#             if ap50 is not None:
+#                 self.logger.report_scalar("Metrics/Base", "AP50", ap50, epoch)
+#             if ar50_90 is not None:
+#                 self.logger.report_scalar("Metrics/Base", "AR50_90", ar50_90, epoch)
+
+#         if "ema_test_coco_eval_bbox" in values:
+#             ema_coco_eval = values["ema_test_coco_eval_bbox"]
+#             ema_ap50_90 = safe_index(ema_coco_eval, 0)
+#             ema_ap50 = safe_index(ema_coco_eval, 1)
+#             ema_ar50_90 = safe_index(ema_coco_eval, 8)
+#             if ema_ap50_90 is not None:
+#                 self.logger.report_scalar("Metrics/EMA", "AP50_90", ema_ap50_90, epoch)
+#             if ema_ap50 is not None:
+#                 self.logger.report_scalar("Metrics/EMA", "AP50", ema_ap50, epoch)
+#             if ema_ar50_90 is not None:
+#                 self.logger.report_scalar("Metrics/EMA", "AR50_90", ema_ar50_90, epoch)
+
+#     def close(self):
+#         if not self.task:
+#             return
+#         self.task.close()

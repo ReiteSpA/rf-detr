@@ -63,15 +63,6 @@ onnxexport = [
     "onnxruntime",
     "polygraphy"
 ]
-metrics = [
-    "tensorboard>=2.13.0",
-    "wandb",
-    "mlflow",
-    "clearml",
-    "matplotlib",
-    "pandas",
-    "seaborn",
-]
 cli = ["jsonargparse[signatures]>=4.27.7"]
 plus = ["rfdetr_plus>=1.0.1, <2.0.0"]
 
